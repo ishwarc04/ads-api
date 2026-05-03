@@ -1,7 +1,10 @@
 import express, { text } from 'express';
+import { GoogleGenAI } from '@google/genai';
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const ai = new GoogleGenAI({});
 
 app.get('/', (req, res) => {
     res.send('Now running with ES Modules!');
@@ -62,6 +65,28 @@ int main() {
     return 0;
 }`
             )
+    }
+});
+
+app.get('/q/:ds', async (req, res)=>{
+    const ds = req.params.ds;
+
+    const prompt = `Write a clean, optimal implementation of a ${ds} data structure in C. 
+                Return ONLY the raw code. Do not include markdown code blocks, backticks, or explanations.`;
+
+    try {
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        const cleanCode = response.text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+
+        res.type('text/plain').send(cleanCode);
+    } catch (error) {
+        console.error("Gemini API Error:", error);
+        res.status(500).json({ error: "Failed to generate code snippet. Please try again." });
     }
 });
 
